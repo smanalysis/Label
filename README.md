@@ -1,6 +1,6 @@
 # Crowbar Label
 
-基于上下文的新闻-评论意见倾向标注系统，以解决现有技术中存在的技术问题，能够有效提高树状结构文本信息数据的标注效率和质量，并降低标注成本。
+基于上下文的新闻-评论意见倾向标注系统，以解决现有技术中存在的技术问题，能够有效提高树状结构文本信息数据的标注效率和质量，并降低标注成本。本系统使用嵌入式H2数据库和Jetty服务器，以单一jar文件发布。
 
 ## 系统由配置文件conf.json定义：
 
@@ -13,3 +13,18 @@
 + invitedCode：字符串，用于用户注册；
 + port：正数，标注服务器的端口；
 
+## newsFile格式：
+
+newsFile文件每行一个json对象，必须包含：newsID，newsTitle，content三个属性。
+
+## commentFile格式：
+
+commentFile文件每行一个json对象，必须包含：commentID，content，newsID，parentCommentID四个属性。
+
+## 使用方法
+
++ 导入newsFile和commentFile数据，并启动服务器：java -jar Label.jar -init
++ 使用现有数据库启动服务器：java -jar Label.jar -start
++ 导出现有标注结果：java -jar Label.jar -export
+
+启动服务器后，可通过浏览器访问对应服务器和接口，开始注册用户和标注。导出文件名为labelled.txt。
