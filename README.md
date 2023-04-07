@@ -28,3 +28,9 @@ commentFile文件每行一个json对象，必须包含：commentID，content，n
 + 导出现有标注结果：java -jar Label.jar -export
 
 启动服务器后，可通过浏览器访问对应服务器和接口，开始注册用户和标注。导出文件名为labelled.txt。
+
+## 更新记录
+
++ 2023-04-07：初始0.1版本发布；
+
+
