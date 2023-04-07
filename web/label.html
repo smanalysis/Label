@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <title>新闻-评论标注</title>
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        .themed-grid-col > button {
+            margin-left: 3px;
+        }
+        button {
+            margin-right: 2px;
+            margin-bottom: 2px;
+        }
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="grid.css" rel="stylesheet">
+    <link href="pricing.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
+</head>
+<body>
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-dark border-bottom box-shadow">
+    <h5 class="my-0 mr-md-auto text-light font-weight-normal">CSMA</h5>
+    <nav class="my-2 my-md-0 mr-md-3">
+        <a class="p-2 text-light" href="label.html">主页</a>
+    </nav>
+    <a class="btn btn-outline-light" href="#" onclick="_signout(); return false;">Sign Out</a>
+</div>
+<main id="main_area" role="main" class="container">
+    <div class="starter-template">
+        <h3 id="title">新闻-评论标注</h3>
+        <p id="explanation" class="lead small">
+            请对比前一条评论，标注当前评论对前一条评论对意见倾向。“<span class="text-success">同意</span>”表示当前评论赞同前一条评论；“<span class="text-danger">不同意</span>”表示当前评论不同意前一条评论；“<span class="text-primary">不明</span>”表示无法判断。
+            <br>
+            例如，前一条评论为“西红柿炒鸡蛋咸的好吃”。当前评论为“西红柿炒鸡蛋甜的好吃”，则标注为“<span class="text-danger">不同意</span>”。
+        </p>
+        <p class="lead small text-center">
+            总节点 <span id="all_nodes" class="badge badge-secondary">7</span>&nbsp;&nbsp;&nbsp;
+            未完成 <span id="uncompleted_nodes" class="badge badge-secondary">67</span>&nbsp;&nbsp;&nbsp;
+            已标记 <span id="my_labeled_nodes" class="badge badge-secondary">23</span>&nbsp;&nbsp;&nbsp;
+            可标记 <span id="my_available_nodes" class="badge badge-secondary">4</span>
+        </p>
+    </div>
+    <div id="content">
+        <div class="row mb-1 small">
+            <div class="col-lg-1 themed-grid-col">0</div>
+            <div class="col-lg-8 themed-grid-col">标注</div>
+            <div class="col-lg-3 themed-grid-col form-inline align-items-lg-center text-center align-content-center">
+                <div id='v' class="form-inline">
+                    <button name="1" class="btn btn-outline-secondary btn-sm form-control align-middle">同意</button>
+                    <button name="0" class="btn btn-outline-secondary btn-sm form-control align-middle">不明</button>
+                    <button name="-1" class="btn btn-outline-secondary btn-sm form-control align-middle">不同意</button>
+                    <!-- <button name="-2" class="btn btn-outline-secondary btn-sm form-control align-middle">无关</button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="row mb-1 small">
+        <div class="col-lg-4"></div>
+        <div class="col-lg-4"><button class="btn btn-primary btn-block" onclick="submit_label(); return false;">Submit & Next</button></div>
+        <div class="col-lg-4"></div>
+    </div>
+</main><!-- /.container -->
+<script src="js/jquery-3.5.1.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/jquery-3.5.1.min.js"><\/script>')</script>
+<script src="js/bootstrap.bundle.js"></script>
+<script src="label.js"></script>
+<script>
+    let volunteer;
+    let cid = {};
+    let title;
+    let explanation;
+    let labels;
+    
+    $(document).ready(function () {
+        // 读取初始化信息
+        $.post("/init-fcn", {},
+                function (data, status) {
+                    title = data.title;
+                    explanation = data.explanation;
+                    document.title = title;
+                    $("#title").text(title);
+                    $("#explanation").text(explanation);
+                    labels = data.labels;
+                }
+        );
+        // let soMany = 10;
+        // console.log(`This is ${soMany} times easier!`);
+        let signed = localStorage.getItem("labeler");
+        if (!signed) {
+            window.location.href = "signin.html";
+        } else {
+            volunteer = JSON.parse(signed);
+            $("#username").text(volunteer.name);
+            // 加载直接next
+            next_path();
+        }
+        // 按键事件
+        document.onkeydown = function(e) {
+            e = e || window.event;
+            // console.log(e.type +"  (keyCode=" + e.keyCode + ")");
+            if (e.keyCode === 13) {
+                submit_label();
+            }
+        }
+    });
+    
+    function _signout() {
+        localStorage.removeItem("labeler");
+        window.location.href = "signin.html";
+    }
+
+    // 获取统计数量
+    function count() {
+        $.post("/label-fcn", {cmd:"count", user:volunteer.mobile},
+                function(data, status){
+                    if (data.state != null && data.state.length > 0) {
+                        alert(data.state);
+                    } else {
+                        let numbers = JSON.parse(data.numbers);
+                        $("#all_nodes").text(numbers[0]);
+                        $("#uncompleted_nodes").text(numbers[1]);
+                        $("#my_labeled_nodes").text(numbers[2]);
+                        $("#my_available_nodes").text(numbers[3]);
+                    }
+                }
+        );
+    }
+
+    // 获取一个路径
+    function next_path() {
+        // 初始化一些界面
+        let cc = $("#content");
+        cc.empty();
+        cid = {};
+        // 获得路径
+        $.post("/label-fcn", {cmd:"path", user:volunteer.mobile},
+                function(data, status) {
+                    if (data.state != null && data.state.length > 0) {
+                        alert(data.state);
+                    } else {
+                        let path = JSON.parse(data.path);
+                        if (path.length <= 0) {
+                            alert("未能找到可被标记的路径，请选择下一条新闻或数据集已经完成！");
+                            return;
+                        }
+                        // 内容写入
+                        for (let i = path.length - 1; i>=0; i--) {
+                            let order = path.length - i - 1;
+                            let txt = path[i].text;
+                            // 如果是新闻，并且超过600字，只显示头尾（会不会影响判断倾向？）
+                            if (i === path.length - 1 && txt.length > 600) {
+                                txt = txt.substr(0, 300) + "......<br>......(<label class='text-danger'>新闻过长，中间部分省略</label>)......<br>......" + txt.substr(txt.length-300);
+                            }
+                            // console.log(path[i].completed);
+                            // console.log($.inArray(username, path[i].labelers));
+                            let btns = "";
+                            if (!path[i].completed) {
+                                let pid = path[i].id;
+                                btns = "<div id='" + pid + "' class='form-inline'>";
+                                labels.forEach(function (v, i) {
+                                    btns += "<button name='" + i + "' class='btn btn-outline-secondary btn-sm form-control align-middle'>" + v + "</button>";
+                                });
+                                btns += "</div>";
+                                let x = $.inArray(volunteer.mobile, path[i].labelers);
+                                if (x < 0) {
+                                    cid[pid] = null;
+                                } else {
+                                    cid[pid] = path[i].labels[x];
+                                }
+                            }
+                            let row =
+                                    "<div class='row mb-1 small'>" +
+                                    "    <div class='col-lg-1 themed-grid-col'>" + order + "</div>" +
+                                    "    <div class='col-lg-8 themed-grid-col'>" + txt + "</div>" +
+                                    "    <div class='col-lg-3 themed-grid-col'>" + btns + "</div>" +
+                                    "</div>";
+                            cc.append(row);
+                        }
+                        // 点击事件处理
+                        $("button[name]").click(function() {
+                            $(this).parent().children("[name='" + 0 + "']").removeClass("btn-success");
+                            $(this).parent().children("[name='0']").addClass("btn-outline-secondary");
+                            $(this).parent().children("[name='" + 1 + "']").removeClass("btn-primary");
+                            $(this).parent().children("[name='1']").addClass("btn-outline-secondary");
+                            $(this).parent().children("[name='" + 2 + "']").removeClass("btn-warning");
+                            $(this).parent().children("[name='2']").addClass("btn-outline-secondary");
+                            $(this).parent().children("[name='" + 3 + "']").removeClass("btn-danger");
+                            $(this).parent().children("[name='3']").addClass("btn-outline-secondary");
+                            $(this).parent().children("[name='" + 4 + "']").removeClass("btn-dark");
+                            $(this).parent().children("[name='4']").addClass("btn-outline-secondary");
+                            let s = $(this).attr("name");
+                            $(this).removeClass("btn-outline-secondary");
+                            switch (s) {
+                                case '0':
+                                    $(this).addClass("btn-success");
+                                    break;
+                                case '1':
+                                    $(this).addClass("btn-primary");
+                                    break;
+                                case '2':
+                                    $(this).addClass("btn-warning");
+                                    break;
+                                case '3':
+                                    $(this).addClass("btn-danger");
+                                    break;
+                                case '4':
+                                    $(this).addClass("btn-dark");
+                                    break;
+                            }
+                        });
+                        console.log(path);
+                        console.log(cid);
+                    }
+                    // 赋值前值
+                    for (let c in cid) {
+                        $("#" + c + " > button[name='" + cid[c] + "']").click();
+                    }
+                }
+        );
+        count();
+    }
+
+    // 标记动作
+    function submit_label() {
+        let labels = {};
+        // 评论的标记
+        for (let c in cid) {
+            let v = $("#" + c + " > button:not(.btn-outline-secondary)");
+            // console.log(v);
+            if (cid[c] === null && v.length === 0) {
+                alert("有数据未标记");
+                return;
+            }
+            // console.log({cid: parseInt(v.attr("value"))});
+            if (cid[c] === null || cid[c] !== v.attr("name")) {
+                labels[c] = v.attr("name");
+            }
+        }
+        console.log(labels);
+        // 提交标记
+        $.post("/label-fcn", {cmd: "label", labels: JSON.stringify(labels), user: volunteer.mobile},
+                function (data, status) {
+                    next_path();
+                }
+        );
+        // 刷新页面
+        // location.reload();
+    }
+</script>
+</body>
+</html>

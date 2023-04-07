@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <title>Sign Up</title>
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="img/favicon.ico"/>
+</head>
+<body class="text-center">
+<form class="form-signin">
+    <img class="mb-4" src="img/slogo.png" alt="" width="72" height="72">
+    <h1 class="h3 mb-3 font-weight-normal">Please sign up</h1>
+    <p>
+        <label for="spMobile" class="sr-only">Mobile Phone</label>
+        <input type="text" id="spMobile" class="form-control" placeholder="Mobile Phone" required autofocus>
+    </p>
+    <p>
+        <label for="spEmail" class="sr-only">Email</label>
+        <input type="email" id="spEmail" class="form-control" placeholder="Email" required>
+    </p>
+    <p>
+        <label for="spName" class="sr-only">Name</label>
+        <input type="email" id="spName" class="form-control" placeholder="Name" required>
+    </p>
+    <p>
+        <label for="spPassword" class="sr-only">Password</label>
+        <input type="password" id="spPassword" class="form-control" placeholder="Password" required>
+    </p>
+    <p>
+        <label for="spPassword2" class="sr-only">Password Again</label>
+        <input type="password" id="spPassword2" class="form-control" placeholder="Password Again" required>
+    </p>
+    <p>
+        <label for="spInvited" class="sr-only">Invited Code</label>
+        <input type="text" id="spInvited" class="form-control" placeholder="Invited Code" required>
+    </p>
+    <button class="btn btn-lg btn-primary btn-block" type="submit" onclick="_signup(); return false;">Sign up</button>
+    <p class="mt-5 mb-3 text-muted">&copy; 2019-2021</p>
+</form>
+<script src="js/jquery-3.5.1.min.js"></script>
+<script>window.jQuery || document.write('<script src="js/jquery-3.5.1.min.js"><\/script>')</script>
+<script src="js/bootstrap.bundle.js"></script>
+<script src="label.js"></script>
+<script>
+    $(document).ready(function () {
+        let signed = localStorage.getItem("labeler");
+        if (!!signed) {
+            window.location.href = "label.html";
+        }
+    });
+
+    function _signup() {
+        // 检查用户名和密码合法性
+        let username = $("#spMobile").val().trim();
+        if (!check_mobile(username)) {
+            alert("请输入合法国内手机号码");
+            return;
+        }
+        let password = $("#spPassword").val().trim();
+        let password2 = $("#spPassword2").val().trim();
+        if (password !== password2) {
+            alert("两次密码不一致");
+            return;
+        }
+        if (!check_password(password)) {
+            alert("密码不能为空，或短于6个字符，或包含非法字符（请使用键盘上有的字符）");
+            return;
+        }
+        let email = $("#spEmail").val().trim();
+        if (!check_email(email)) {
+            alert("Email地址非法");
+            return;
+        }
+        let name = $("#spName").val().trim();
+        if (name.length <= 0) {
+            alert("姓名不能为空");
+            return;
+        }
+        let invited = $("#spInvited").val().trim();
+        if (invited.length <= 0) {
+            alert("邀请码不能为空");
+            return;
+        }
+        // 执行登录
+        $.post("/label-fcn", {cmd: "signup", mobile: username, email: email, name: name, password: password, invited: invited},
+                function (data, status) {
+                    if (data.state != null && data.state.length > 0) {
+                        alert(data.state);
+                    } else {
+                        window.location.href = "signin.html";
+                    }
+                }
+        );
+    }
+</script>
+</body>
+</html>
